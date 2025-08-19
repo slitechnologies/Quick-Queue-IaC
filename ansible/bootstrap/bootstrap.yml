@@ -1,0 +1,93 @@
+---
+- hosts: all
+  become: yes
+  remote_user: ec2-user  # AWS EC2 default user
+  pre_tasks:
+
+  - name: install updates (Amazon Linux)
+    tags: always
+    yum:
+      name: '*'
+      state: latest
+      update_cache: yes
+    when: ansible_distribution == "Amazon"
+
+  - name: install updates (Ubuntu on EC2)
+    tags: always
+    apt:
+      upgrade: dist
+      update_cache: yes
+    when: ansible_distribution == "Ubuntu"
+
+  - name: install updates (CentOS/RHEL on EC2)
+    tags: always
+    yum:
+      name: '*'
+      state: latest
+      update_cache: yes
+    when: ansible_distribution in ["CentOS", "RedHat"]
+
+- hosts: all
+  become: true
+  remote_user: ec2-user
+  tasks:
+
+  - name: create kates user
+    tags: always
+    user:
+      name: kates
+      groups: wheel  # Use 'wheel' group for sudo on RHEL/Amazon Linux
+      shell: "/bin/bash"
+    when: ansible_distribution in ["Amazon", "CentOS", "RedHat"]
+
+  - name: create kates user (Ubuntu)
+    tags: always
+    user:
+      name: manaba
+      groups: sudo  # Use 'sudo' group on Ubuntu
+      shell: "/bin/bash"
+    when: ansible_distribution == "Ubuntu"
+
+  - name: Set authorized key for manaba user
+    authorized_key:
+      user: manaba
+      state: present
+      key: "{{ lookup('file', '~/.ssh/manaba-ec2-key.pub') }}"  # Your AWS key
+
+  - name: add sudoers file for manaba (RHEL/Amazon Linux)
+    tags: always
+    copy:
+      src: sudoer_manaba
+      dest: /etc/sudoers.d/manaba
+      owner: root
+      group: root
+      mode: 0440
+    when: ansible_distribution in ["Amazon", "CentOS", "RedHat"]
+
+  - name: add sudoers file for manaba (Ubuntu)
+    tags: always
+    copy:
+      src: sudoer_manaba
+      dest: /etc/sudoers.d/manaba
+      owner: root
+      group: root
+      mode: 0440
+    when: ansible_distribution == "Ubuntu"
+
+  - name: generate sshd_config file from template
+    tags: ssh
+    vars:
+      ssh_users: "manaba ec2-user"  # Keep ec2-user access as backup
+    template:
+      src: "sshd_config.j2"
+      dest: /etc/ssh/sshd_config
+      owner: root
+      group: root
+      mode: 0644
+    notify: restart_sshd
+
+  handlers:
+  - name: restart_sshd
+    service:
+      name: sshd
+      state: restarted
