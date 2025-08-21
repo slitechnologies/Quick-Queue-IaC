@@ -1,0 +1,10 @@
+[k8s_master]
+52.90.68.106
+
+[k8s_node]
+18.215.236.29
+52.202.162.114
+
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3.9

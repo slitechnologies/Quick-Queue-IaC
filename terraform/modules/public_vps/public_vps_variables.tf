@@ -19,12 +19,21 @@ variable "instance_type" {
   default     = "t2.micro"
 }
 
+
+variable "ami_id" {
+  description = "AMI ID for EC2 instances"
+  type = string
+  default     = "ami-00ca32bbc84273381"  # Ubuntu or Amazon Linux
+}
+
 variable "ssh_key_name" {
   description = "Name of the EC2 key pair for SSH access"
   type        = string
+  default     = "manaba-key"
 }
 
-variable "ami_id" {
-  description = "AMI ID to use for the EC2 instance"
+variable "allowed_ssh_cidr" {
+  description = "CIDR block allowed to SSH into the instance"
   type        = string
+  default     = "0.0.0.0/0"
 }

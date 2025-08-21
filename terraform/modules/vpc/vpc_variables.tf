@@ -1,17 +1,13 @@
 variable "vpc_name" {
   description = "Name of the vpc to be created"
   type = string
-  default = "my_vpc"
-}
-
-variable "vpc_ip_range" {
-  description = "Subnet definition for the VPC"
-  type = string
-  default = "10.240.0.0/16"
+  default = "manaba_vpc"
 }
 
 variable "aws_region" {
-  default = "us-east-1"
+  description = "AWS region to deploy resources"
+  type        = string
+  default     = "us-east-1"
 }
 
 variable "ssh_key" {
@@ -19,13 +15,20 @@ variable "ssh_key" {
   default     = "manaba-key"
 }
 
-variable "ami_id" {
-  description = "AMI ID for EC2 instances"
-  default     = "ami-0de716d6197524dd9"  # Ubuntu or Amazon Linux
-}
 
-variable "az" {
+variable "vpc_az" {
   description = "Availability Zone for the VPC"
   type        = string
   default     = "us-east-1a"
+}
+
+variable "vpc_ip_range" {
+  description = "Subnet definition for the VPC"
+  type        = string
+  default     = "10.240.0.0/16"
+
+  validation {
+    condition     = can(regex("^\\d+\\.\\d+\\.\\d+\\.\\d+/\\d+$", var.vpc_ip_range))
+    error_message = "CIDR block must be in valid format, e.g., 10.0.0.0/16"
+  }
 }
